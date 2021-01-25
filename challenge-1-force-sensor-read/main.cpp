@@ -3,52 +3,45 @@
 #include <vector>
 #include <bitset>
 
-class matrix{
+class matrix : public std::vector<double>{
 	// ROW MAJOR!
 	int rows;
 	int cols;
 
 public:
-	double *mat;
-	//constructor
+	// overloaded constructor
 	matrix(int m, int n){
 		rows = m;
 		cols = n;
-		mat = new double[m*n];
 
-		for (int i = 0; i < m*n; ++i){
-			mat[i] = 0;
-		}
-	}
-	//destructor
-	~matrix(){
-		delete mat;
+		// Resize the vector to allocate the matrix
+		resize(m*n);
 	}
 
-	matrix operator + (matrix b){
+	matrix operator + (const matrix b){
 
-		matrix m_res(b.rows, b.cols);
+		matrix m_res(rows, cols);
 
 		if (rows == b.rows && cols == b.cols){
 			for (int x = 0; x < rows*cols; ++x){
-				m_res.mat[x] = mat[x] + b.mat[x];
+				m_res.at(x) = at(x) + b.at(x);
 			}
 		}
 		else{
 			for (int x = 0; x < rows*cols; ++x){
-				m_res.mat[x] = 0;
+				m_res.at(x) = 0;
 			}
-			std::cout << "Error! Cannot add matrices with different dimensions!" << std::endl;
+			std::cout << "Error! Cannot add matrices with different dimensions!" << "\n";
 		}
 
 		return m_res;
 	}
 	matrix operator * (const matrix b){
 
-		matrix *m_res = new matrix(rows, b.cols);
+		matrix m_res = matrix(rows, b.cols);
 
 		for (int x = 0; x < rows*b.cols; ++x){
-			m_res->mat[x] = 0;
+			m_res.at(x) = 0;
 		}
 		if (cols == b.rows){
 			for (int i = 0; i < b.cols; ++i){
@@ -58,54 +51,42 @@ public:
 					for (int k = 0; k < cols; ++k){
 						// k selects the element in the selected row/col
 						//								rows A				cols B
-						m_res->mat[i + j*b.cols] += mat[j*cols + k]*b.mat[i + k*b.cols];
-						//std::cout << "element: " << i + j*b.cols << " a: " << j*cols + k << " b: " << i + k*b.cols << std::endl;
-						//std::cout << "element: " << i + j*b.cols << " a: " << mat[j*cols + k] << " b: " << b.mat[i + k*b.cols] << std::endl;
+						m_res.at(i + j*b.cols) += at(j*cols + k) * b.at(i + k*b.cols);
+						//std::cout << "element: " << i + j*b.cols << " a: " << j*cols + k << " b: " << i + k*b.cols << "\n";
+						//std::cout << "element: " << i + j*b.cols << " a: " << mat[j*cols + k] << " b: " << b.mat[i + k*b.cols] << "\n";
 					}
 				}
 			}
 		}
 		else{
-			std::cout << "Error! Cannot multiply matrices with invalid dimensions!" << std::endl;
+			std::cout << "Error! Cannot multiply matrices with invalid dimensions!" << "\n";
 		}
 
-		return *m_res;
+		return m_res;
 	}
 	matrix operator / (double d){
 
 		for (int i = 0; i < rows*cols; ++i){
-			mat[i] = mat[i]/d;
+			at(i) = at(i)/d;
 		}
 
 		return *this;
 	}
-	matrix &operator = (matrix b){
 
-		if (rows == b.rows && cols == b.cols){
-			for (int i = 0; i < rows*cols; ++i){
-				mat[i] = b.mat[i];
-			}
-		}
-		else{
-			std::cout << "Cannot attribute matrices with different dimensions!" << std::endl;
-		}
-
-		return *this;
-	}
 	matrix T(){
 
-		matrix *m_temp = new matrix(rows, cols);
+		matrix m_temp = matrix(rows, cols);
 		//double *m_temp = new double[cols*rows];
 
 		for (int i = 0; i < cols; ++i){
 			for (int j = 0; j < rows; ++j){
-				m_temp->mat[i*rows + j] = mat[i + j*cols];
+				m_temp.at(i*rows + j) = at(i + j*cols);
 			}
 		}
-		m_temp->cols = rows;
-		m_temp->rows = cols;
+		m_temp.cols = rows;
+		m_temp.rows = cols;
 
-		return *m_temp;
+		return m_temp;
 	}
 
 	int get_rows(){
@@ -115,19 +96,26 @@ public:
 		return cols;
 	}
 
-	friend std::ostream& operator<< (std::ostream &os, matrix const &m);
-};
-
-std::ostream& operator<< (std::ostream &os, matrix const &m){
-
-	for (int i = 0; i < m.rows; ++i){
-		for (int j = 0; j < m.cols; ++j){
-			os << m.mat[j + i*m.cols] << " ";
-		}
-		os << std::endl;
+	double i_access(int m, int n){
+		// access matrix elements through common indices: row, col
+		return at( (n - 1) + (m - 1) *cols );
+	}
+	void i_change(int m, int n, double x){
+		// Change matrix elements through common indices: row, col
+		at( (n - 1) + (m - 1) *cols ) = x;
 	}
 
-	return os;
+	friend std::ostream& operator<< (std::ostream &os, matrix const &m){
+		for (int i = 0; i < m.rows; ++i){
+			for (int j = 0; j < m.cols; ++j){
+				os << m.at(j + i*m.cols) << " ";
+			}
+			os << "\n";
+		}
+
+		return os;
+	};
+
 };
 
 int main(int argc, const char** argv){
@@ -154,24 +142,14 @@ int main(int argc, const char** argv){
 
 	// check file
 	if (source_file.is_open()){
-		std::cout << "File successfully opened!" << std::endl;
+		std::cout << "File successfully opened!" << "\n";
 	}
 	else{
-		std::cout << "Could not open file!" << std::endl;
+		std::cout << "Could not open file!" << "\n";
 		return 1;
 	}
 
-//	matrix a(6,6), b(6, 1);
-//	for (int x = 0; x < 36; ++x){
-//		a.mat[x] = x;
-//	}
-//	for (int x = 0; x < 6; ++x){
-//		b.mat[x] = 1;
-//	}
-//
-//	std::cout << a*b;
-
-	std::cout << "Getting only sensor messages..." << std::endl;
+	std::cout << "Getting only sensor messages..." << "\n";
 	while (!source_file.eof()){
 		// parse lines of the file
 		source_file >> can1 >> std::hex >> opcode >> size;
@@ -183,7 +161,7 @@ int main(int argc, const char** argv){
 			// sorts the messages
 			switch (opcode){
 				case 0:		// read SG data (status)
-					//std::cout << "Getting status:" << std::endl;
+					//std::cout << "Getting status:" << "\n";
 
 					// Jump a line
 					source_file >> can1 >> std::hex >> opcode >> size;
@@ -198,7 +176,7 @@ int main(int argc, const char** argv){
 							status = status*0x100;
 							status += std::stoi(response.substr(2 + i*3, 2), nullptr, 16);
 						}
-						//std::cout << "opcode: " << opcode << " status: " << std::hex << status << std::endl;
+						//std::cout << "opcode: " << opcode << " status: " << std::hex << status << "\n";
 						// Gets last 6 bytes that contains strain gauge data
 						for (int i = 0; i < 3; ++i){
 							sgi = 0;
@@ -206,10 +184,10 @@ int main(int argc, const char** argv){
 								sgi = sgi*0x100;
 								sgi += std::stoi(response.substr(8 + i*6 + j*3, 2), nullptr, 16);
 							}
-							// std::cout << "opcode: " << opcode << " sgi: " << sgi << std::endl;
+							// std::cout << "opcode: " << opcode << " sgi: " << sgi << "\n";
 
 							// fills vector
-							SGD.mat[i*2] = sgi;
+							SGD.at(i*2) = sgi;
 						}
 					}
 
@@ -226,21 +204,21 @@ int main(int argc, const char** argv){
 								sgi = sgi*0x100;
 								sgi += std::stoi(response.substr(2 + i*6 + j*3, 2), nullptr, 16);
 							}
-							// std::cout << "opcode: " << opcode << " sgi: " << sgi << std::endl;
+							// std::cout << "opcode: " << opcode << " sgi: " << sgi << "\n";
 
 							// fills vector
-							SGD.mat[i*2 + 1] = sgi;
+							SGD.at(i*2 + 1) = sgi;
 						}
 					}
 
-					//std::cout << "rows: " << SGD.get_rows() << "cols: " << SGD.get_cols() << std::endl <<  SGD.T();
+					//std::cout << "rows: " << SGD.get_rows() << "cols: " << SGD.get_cols() << "\n" <<  SGD.T();
 
 					loads = TCM*SGD/CpF;
 					std::cout << "Calculated loads: " << loads.T();
 
 					break;
 				case 2:		// read (gets matrix and axis)
-					std::cout << "Reading matrix:" << std::endl;
+					std::cout << "Reading matrix:" << "\n";
 
 					// Reads the entire block of messages containing the matrix (maybe, rs)
 					while (opcode == 2){
@@ -267,12 +245,12 @@ int main(int argc, const char** argv){
 
 							}
 
-							TCM.mat[ TCM_row*TCM.get_cols() + 2 * j] = *(float *)&SGi;
-							TCM.mat[ TCM_row*TCM.get_cols() + 2 * j + 1] = *(float *)&SGj;
+							TCM.at( TCM_row*TCM.get_cols() + 2 * j) = *(float *)&SGi;
+							TCM.at( TCM_row*TCM.get_cols() + 2 * j + 1) = *(float *)&SGj;
 
-//							std::cout << "SG0: " << SGi << " SG1: " << SGj << std::endl;
-//							std::cout << "SG0: " << std::bitset<32>(SGi) << " SG1: " << std::bitset<32>(SGj) << std::endl;
-							std::cout << "Row: " << TCM_row << " SG0: " << *(float *)&SGi << " SG1: " << *(float *)&SGj << std::endl;
+//							std::cout << "SG0: " << SGi << " SG1: " << SGj << "\n";
+//							std::cout << "SG0: " << std::bitset<32>(SGi) << " SG1: " << std::bitset<32>(SGj) << "\n";
+							std::cout << "Row: " << TCM_row << " SG0: " << *(float *)&SGi << " SG1: " << *(float *)&SGj << "\n";
 
 
 							// Jump line
@@ -303,14 +281,13 @@ int main(int argc, const char** argv){
 						CpT = CpT*0x100;
 						CpT += std::stoi(response.substr(14 + i*3, 2), nullptr, 16);
 					}
-					std::cout << "CpF: " << CpF << " CpT: " << CpT << std::endl;
+					std::cout << "CpF: " << CpF << " CpT: " << CpT << "\n";
 					break;
 				case 8:		// Read Unit
 					break;
 				case 9:
 					break;
 			}
-			//std::cout << can1 << " " << opcode << " " << size << response << std::endl;
 		}
 	}
 
